@@ -74,6 +74,18 @@ def delete(id):
     conn.execute("DELETE FROM habits WHERE id=?", (id,))
     conn.commit()
     return redirect("/")
+@app.route("/edit/<int:id>", methods=["GET", "POST"])
+def edit(id):
+    conn = get_db()
+
+    if request.method == "POST":
+        new_name = request.form["name"]
+        conn.execute("UPDATE habits SET name=? WHERE id=?", (new_name, id))
+        conn.commit()
+        return redirect("/")
+
+    habit = conn.execute("SELECT * FROM habits WHERE id=?", (id,)).fetchone()
+    return render_template("edit.html", habit=habit)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)

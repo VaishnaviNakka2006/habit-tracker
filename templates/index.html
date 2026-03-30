@@ -17,15 +17,21 @@
     <ul>
         {% for habit in habits %}
         <li>
-            <div>
-                <strong>{{ habit[1] }}</strong><br>
-                🔥 Streak: {{ habit[2] }}
-            </div>
-            <div>
-    <a class="done-btn" href="/done/{{ habit[0] }}">Done</a>
-    <a class="delete-btn" href="/delete/{{ habit[0] }}">Delete</a>
-</div>
-        </li>
+    <div>
+        <strong>{{ habit[1] }}</strong><br>
+        🔥 Streak: {{ habit[2] }}
+
+        <div class="progress">
+            <div class="progress-bar" style="width: {{ habit[2]*10 }}%"></div>
+        </div>
+    </div>
+
+    <div>
+        <a class="done-btn" href="/done/{{ habit[0] }}">Done</a>
+        <a class="edit-btn" href="/edit/{{ habit[0] }}">Edit</a>
+        <a class="delete-btn" href="/delete/{{ habit[0] }}">Delete</a>
+    </div>
+</li>
         {% endfor %}
     </ul>
 </div>
