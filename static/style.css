@@ -81,3 +81,17 @@ li {
 .done-btn:hover {
     background: #059669;
 }
+
+.delete-btn {
+    background: #ef4444;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+}

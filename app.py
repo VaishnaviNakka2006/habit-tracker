@@ -68,6 +68,12 @@ def done(id):
     conn.commit()
 
     return redirect("/")
+@app.route("/delete/<int:id>")
+def delete(id):
+    conn = get_db()
+    conn.execute("DELETE FROM habits WHERE id=?", (id,))
+    conn.commit()
+    return redirect("/")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)

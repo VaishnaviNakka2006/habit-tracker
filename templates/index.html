@@ -21,7 +21,10 @@
                 <strong>{{ habit[1] }}</strong><br>
                 🔥 Streak: {{ habit[2] }}
             </div>
-            <a class="done-btn" href="/done/{{ habit[0] }}">Done</a>
+            <div>
+    <a class="done-btn" href="/done/{{ habit[0] }}">Done</a>
+    <a class="delete-btn" href="/delete/{{ habit[0] }}">Delete</a>
+</div>
         </li>
         {% endfor %}
     </ul>
