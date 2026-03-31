@@ -1,54 +1,14 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
 from datetime import date, timedelta
 
 app = Flask(__name__)
+app.secret_key = "secret123"
 
 def get_db():
     return sqlite3.connect("habits.db")
 
-# create table
-@app.route("/signup", methods=["POST"])
-def signup():
-    username = request.form["username"]
-    password = request.form["password"]
-
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO users (username, password) VALUES (?,?)",
-        (username, password)
-    )
-    conn.commit()
-
-    return redirect("/")
-from flask import session
-
-app.secret_key = "secret123"
-
-@app.route("/login", methods=["POST"])
-def login():
-    username = request.form["username"]
-    password = request.form["password"]
-
-    conn = get_db()
-    user = conn.execute(
-        "SELECT * FROM users WHERE username=? AND password=?",
-        (username, password)
-    ).fetchone()
-
-    if user:
-        session["user_id"] = user[0]
-
-    return redirect("/")
-with get_db() as conn:
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS habits(
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        streak INTEGER,
-        last_done TEXT
-    )
-    """)
+# Create tables
 with get_db() as conn:
     conn.execute("""
     CREATE TABLE IF NOT EXISTS users(
@@ -67,23 +27,50 @@ with get_db() as conn:
         last_done TEXT
     )
     """)
-@app.route("/add", methods=["POST"])
-def add():
-    name = request.form["name"]
+
+# ---------------- AUTH ----------------
+
+@app.route("/signup", methods=["POST"])
+def signup():
+    username = request.form["username"]
+    password = request.form["password"]
 
     conn = get_db()
     conn.execute(
-        "INSERT INTO habits (user_id, name, streak, last_done) VALUES (?, ?, 0, '')",
-        (session["user_id"], name)
+        "INSERT INTO users (username, password) VALUES (?,?)",
+        (username, password)
     )
     conn.commit()
 
     return redirect("/")
 
+@app.route("/login", methods=["POST"])
+def login():
+    username = request.form["username"]
+    password = request.form["password"]
+
+    conn = get_db()
+    user = conn.execute(
+        "SELECT * FROM users WHERE username=? AND password=?",
+        (username, password)
+    ).fetchone()
+
+    if user:
+        session["user_id"] = user[0]
+
+    return redirect("/")
+
+@app.route("/logout")
+def logout():
+    session.pop("user_id", None)
+    return redirect("/")
+
+# ---------------- MAIN ----------------
+
 @app.route("/")
 def index():
     if "user_id" not in session:
-        return redirect("/")
+        return render_template("login.html")  # show login page
 
     conn = get_db()
     habits = conn.execute(
@@ -93,15 +80,22 @@ def index():
 
     return render_template("index.html", habits=habits)
 
+# ---------------- HABITS ----------------
+
 @app.route("/add", methods=["POST"])
 def add():
+    if "user_id" not in session:
+        return redirect("/")
+
     name = request.form["name"]
+
     conn = get_db()
     conn.execute(
-        "INSERT INTO habits (name, streak, last_done) VALUES (?,0,'')",
-        (name,)
+        "INSERT INTO habits (user_id, name, streak, last_done) VALUES (?, ?, 0, '')",
+        (session["user_id"], name)
     )
     conn.commit()
+
     return redirect("/")
 
 @app.route("/done/<int:id>")
@@ -137,24 +131,35 @@ def done(id):
     conn.commit()
 
     return redirect("/")
+
 @app.route("/delete/<int:id>")
 def delete(id):
     conn = get_db()
     conn.execute("DELETE FROM habits WHERE id=?", (id,))
     conn.commit()
     return redirect("/")
+
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit(id):
     conn = get_db()
 
     if request.method == "POST":
         new_name = request.form["name"]
-        conn.execute("UPDATE habits SET name=? WHERE id=?", (new_name, id))
+        conn.execute(
+            "UPDATE habits SET name=? WHERE id=?",
+            (new_name, id)
+        )
         conn.commit()
         return redirect("/")
 
-    habit = conn.execute("SELECT * FROM habits WHERE id=?", (id,)).fetchone()
+    habit = conn.execute(
+        "SELECT * FROM habits WHERE id=?",
+        (id,)
+    ).fetchone()
+
     return render_template("edit.html", habit=habit)
+
+# ---------------- RUN ----------------
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
