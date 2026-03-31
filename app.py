@@ -178,7 +178,7 @@ def edit(id):
     ).fetchone()
     conn.close()
 
-    return render_template("edit.html", habit=habit)
+    return str(habits)
 
 # ---------------- RUN ----------------
 
