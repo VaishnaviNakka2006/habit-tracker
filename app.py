@@ -8,6 +8,38 @@ def get_db():
     return sqlite3.connect("habits.db")
 
 # create table
+@app.route("/signup", methods=["POST"])
+def signup():
+    username = request.form["username"]
+    password = request.form["password"]
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO users (username, password) VALUES (?,?)",
+        (username, password)
+    )
+    conn.commit()
+
+    return redirect("/")
+from flask import session
+
+app.secret_key = "secret123"
+
+@app.route("/login", methods=["POST"])
+def login():
+    username = request.form["username"]
+    password = request.form["password"]
+
+    conn = get_db()
+    user = conn.execute(
+        "SELECT * FROM users WHERE username=? AND password=?",
+        (username, password)
+    ).fetchone()
+
+    if user:
+        session["user_id"] = user[0]
+
+    return redirect("/")
 with get_db() as conn:
     conn.execute("""
     CREATE TABLE IF NOT EXISTS habits(
@@ -17,11 +49,48 @@ with get_db() as conn:
         last_done TEXT
     )
     """)
+with get_db() as conn:
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY,
+        username TEXT,
+        password TEXT
+    )
+    """)
+
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS habits(
+        id INTEGER PRIMARY KEY,
+        user_id INTEGER,
+        name TEXT,
+        streak INTEGER,
+        last_done TEXT
+    )
+    """)
+@app.route("/add", methods=["POST"])
+def add():
+    name = request.form["name"]
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO habits (user_id, name, streak, last_done) VALUES (?, ?, 0, '')",
+        (session["user_id"], name)
+    )
+    conn.commit()
+
+    return redirect("/")
 
 @app.route("/")
 def index():
+    if "user_id" not in session:
+        return redirect("/")
+
     conn = get_db()
-    habits = conn.execute("SELECT * FROM habits").fetchall()
+    habits = conn.execute(
+        "SELECT * FROM habits WHERE user_id=?",
+        (session["user_id"],)
+    ).fetchall()
+
     return render_template("index.html", habits=habits)
 
 @app.route("/add", methods=["POST"])
