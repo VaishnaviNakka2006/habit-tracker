@@ -88,6 +88,9 @@ def index():
 
 @app.route("/add", methods=["POST"])
 def add():
+    if "user_id" not in session:
+        return redirect("/")
+
     name = request.form["name"]
 
     conn = get_db()
@@ -102,6 +105,9 @@ def add():
 
 @app.route("/done/<int:id>")
 def done(id):
+    if "user_id" not in session:
+        return redirect("/")
+
     conn = get_db()
 
     habit = conn.execute(
@@ -141,6 +147,9 @@ def done(id):
 
 @app.route("/delete/<int:id>")
 def delete(id):
+    if "user_id" not in session:
+        return redirect("/")
+
     conn = get_db()
     conn.execute(
         "DELETE FROM habits WHERE id=? AND user_id=?",
@@ -152,6 +161,9 @@ def delete(id):
 
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit(id):
+    if "user_id" not in session:
+        return redirect("/")
+
     conn = get_db()
 
     if request.method == "POST":
