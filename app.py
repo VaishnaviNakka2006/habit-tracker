@@ -72,17 +72,21 @@ def logout():
 
 @app.route("/")
 def index():
-    if "user_id" not in session:
-        return render_template("login.html")
+    try:
+        if "user_id" not in session:
+            return render_template("login.html")
 
-    conn = get_db()
-    habits = conn.execute(
-        "SELECT * FROM habits WHERE user_id=?",
-        (session["user_id"],)
-    ).fetchall()
-    conn.close()
+        conn = get_db()
+        habits = conn.execute(
+            "SELECT * FROM habits WHERE user_id=?",
+            (session["user_id"],)
+        ).fetchall()
+        conn.close()
 
-    return render_template("index.html", habits=habits)
+        return render_template("index.html", habits=habits)
+
+    except Exception as e:
+        return str(e) + "<br><pre>" + traceback.format_exc() + "</pre>"
 
 # ---------------- HABITS ----------------
 
