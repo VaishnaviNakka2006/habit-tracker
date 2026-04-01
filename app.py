@@ -39,8 +39,8 @@ def add():
 def done(id):
     conn = get_db()
     habit = conn.execute(
-        "SELECT streak, last_done FROM habits WHERE id=?",
-        (id,)
+        "SELECT streak, last_done FROM habits WHERE id=? AND user_id=?",
+        (id, session.get("user_id"))
     ).fetchone()
 
     today = date.today()
@@ -74,17 +74,33 @@ def edit(id):
 
     if request.method == "POST":
         new_name = request.form["name"]
-        conn.execute("UPDATE habits SET name=? WHERE id=?", (new_name, id))
+
+        conn.execute(
+            "UPDATE habits SET name=? WHERE id=? AND user_id=?",
+            (new_name, id, session.get("user_id"))
+        )
         conn.commit()
+        conn.close()
         return redirect("/")
 
-    habit = conn.execute("SELECT * FROM habits WHERE id=?", (id,)).fetchone()
+    habit = conn.execute(
+        "SELECT * FROM habits WHERE id=? AND user_id=?",
+        (id, session.get("user_id"))
+    ).fetchone()
+
+    conn.close()
     return render_template("edit.html", habit=habit)
 @app.route("/delete/<int:id>")
 def delete(id):
     conn = get_db()
-    conn.execute("DELETE FROM habits WHERE id=?", (id,))
+
+    conn.execute(
+        "DELETE FROM habits WHERE id=? AND user_id=?",
+        (id, session.get("user_id"))
+    )
+
     conn.commit()
+    conn.close()
     return redirect("/")
 
 
