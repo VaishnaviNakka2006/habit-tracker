@@ -18,8 +18,8 @@
     {% for habit in habits %}
     <li>
 
-    <strong>{{ habit[1] }}</strong><br>
-    🔥 Streak: {{ habit[2] }}
+    <strong>{{ habit[2] }}</strong><!--name-->
+    🔥 Streak: {{ habit[3] }}
 
     <div class="progress">
         <div class="progress-bar" style="width: {{ habit[2]*10 }}%"></div>
