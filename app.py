@@ -22,6 +22,7 @@ with get_db() as conn:
 def index():
     conn = get_db()
     habits = conn.execute("SELECT * FROM habits").fetchall()
+    conn.close()
     return render_template("index.html", habits=habits)
 
 @app.route("/add", methods=["POST"])
@@ -33,15 +34,19 @@ def add():
         (name,)
     )
     conn.commit()
+    conn.close()
     return redirect("/")
 
 @app.route("/done/<int:id>")
 def done(id):
     conn = get_db()
     habit = conn.execute(
-        "SELECT streak, last_done FROM habits WHERE id=? AND user_id=?",
-        (id, session.get("user_id"))
+        "SELECT streak, last_done FROM habits WHERE id=?",
+        (id,)
     ).fetchone()
+
+    if not habit:
+        return redirect("/")
 
     today = date.today()
     today_str = str(today)
@@ -66,43 +71,39 @@ def done(id):
         (streak, today_str, id)
     )
     conn.commit()
+    conn.close()
 
     return redirect("/")
+
+@app.route("/delete/<int:id>")
+def delete(id):
+    conn = get_db()
+    conn.execute("DELETE FROM habits WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect("/")
+
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit(id):
     conn = get_db()
 
     if request.method == "POST":
         new_name = request.form["name"]
-
         conn.execute(
-            "UPDATE habits SET name=? WHERE id=? AND user_id=?",
-            (new_name, id, session.get("user_id"))
+            "UPDATE habits SET name=? WHERE id=?",
+            (new_name, id)
         )
         conn.commit()
         conn.close()
         return redirect("/")
 
     habit = conn.execute(
-        "SELECT * FROM habits WHERE id=? AND user_id=?",
-        (id, session.get("user_id"))
+        "SELECT * FROM habits WHERE id=?",
+        (id,)
     ).fetchone()
-
     conn.close()
+
     return render_template("edit.html", habit=habit)
-@app.route("/delete/<int:id>")
-def delete(id):
-    conn = get_db()
-
-    conn.execute(
-        "DELETE FROM habits WHERE id=? AND user_id=?",
-        (id, session.get("user_id"))
-    )
-
-    conn.commit()
-    conn.close()
-    return redirect("/")
-
 
 if __name__ == "__main__":
     app.run(debug=True)
