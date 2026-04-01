@@ -67,30 +67,11 @@ with get_db() as conn:
         last_done TEXT
     )
     """)
-@app.route("/add", methods=["POST"])
-def add():
-    name = request.form["name"]
-
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO habits (user_id, name, streak, last_done) VALUES (?, ?, 0, '')",
-        (session["user_id"], name)
-    )
-    conn.commit()
-
-    return redirect("/")
 
 @app.route("/")
 def index():
-    if "user_id" not in session:
-        return redirect("/")
-
     conn = get_db()
-    habits = conn.execute(
-        "SELECT * FROM habits WHERE user_id=?",
-        (session["user_id"],)
-    ).fetchall()
-
+    habits = conn.execute("SELECT * FROM habits").fetchall()
     return render_template("index.html", habits=habits)
 
 @app.route("/add", methods=["POST"])
