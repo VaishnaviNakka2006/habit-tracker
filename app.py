@@ -8,60 +8,10 @@ def get_db():
     return sqlite3.connect("habits.db")
 
 # create table
-@app.route("/signup", methods=["POST"])
-def signup():
-    username = request.form["username"]
-    password = request.form["password"]
-
-    conn = get_db()
-    conn.execute(
-        "INSERT INTO users (username, password) VALUES (?,?)",
-        (username, password)
-    )
-    conn.commit()
-
-    return redirect("/")
-from flask import session
-
-app.secret_key = "secret123"
-
-@app.route("/login", methods=["POST"])
-def login():
-    username = request.form["username"]
-    password = request.form["password"]
-
-    conn = get_db()
-    user = conn.execute(
-        "SELECT * FROM users WHERE username=? AND password=?",
-        (username, password)
-    ).fetchone()
-
-    if user:
-        session["user_id"] = user[0]
-
-    return redirect("/")
 with get_db() as conn:
     conn.execute("""
     CREATE TABLE IF NOT EXISTS habits(
         id INTEGER PRIMARY KEY,
-        name TEXT,
-        streak INTEGER,
-        last_done TEXT
-    )
-    """)
-with get_db() as conn:
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY,
-        username TEXT,
-        password TEXT
-    )
-    """)
-
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS habits(
-        id INTEGER PRIMARY KEY,
-        user_id INTEGER,
         name TEXT,
         streak INTEGER,
         last_done TEXT
@@ -118,24 +68,6 @@ def done(id):
     conn.commit()
 
     return redirect("/")
-@app.route("/delete/<int:id>")
-def delete(id):
-    conn = get_db()
-    conn.execute("DELETE FROM habits WHERE id=?", (id,))
-    conn.commit()
-    return redirect("/")
-@app.route("/edit/<int:id>", methods=["GET", "POST"])
-def edit(id):
-    conn = get_db()
-
-    if request.method == "POST":
-        new_name = request.form["name"]
-        conn.execute("UPDATE habits SET name=? WHERE id=?", (new_name, id))
-        conn.commit()
-        return redirect("/")
-
-    habit = conn.execute("SELECT * FROM habits WHERE id=?", (id,)).fetchone()
-    return render_template("edit.html", habit=habit)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(debug=True)
